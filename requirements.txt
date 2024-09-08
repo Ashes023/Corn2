@@ -1,0 +1,4 @@
+torch==2.4.1   # or the version you're using
+torchvision==0.19.1   # or the version you're using
+Pillow==9.0.1   # for handling images
+Flask==3.0.3
