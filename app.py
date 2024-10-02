@@ -5,19 +5,18 @@ from torchvision import transforms
 import torchvision.models as models
 from PIL import Image
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import CORS
+from flask_cors import CORS
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all domains
-# Or, you can restrict it to specific domains by doing:
-# CORS(app, resources={r"/predict": {"origins": "http://your-allowed-domain.com"}})
 
 # Initialize and load the model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# Load the ResNet-18 model with pre-trained weights and modify the final layer
-model = models.resnet18(pretrained=True)
+# Load the ResNet-18 model with updated weights parameter
+from torchvision.models import ResNet18_Weights
+model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = torch.nn.Linear(in_features=512, out_features=4)
 model = model.to(device)
 model.load_state_dict(torch.load('model.pth', map_location=device, weights_only=True))
@@ -57,5 +56,6 @@ def predict():
     return jsonify({'prediction': predicted_label})
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))  # Use the environment variable or default to 5000
+    # Set the port from the environment variable or default to 8080
+    port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
