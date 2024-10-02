@@ -19,8 +19,12 @@ from torchvision.models import ResNet18_Weights
 model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = torch.nn.Linear(in_features=512, out_features=4)
 model = model.to(device)
-model.load_state_dict(torch.load('model.pth', map_location=device,))
-model.eval()
+
+# Save the entire model (once, when you have trained the model)
+#torch.save(model, 'model.pth')
+
+# Load the entire model
+model = torch.load('model.pth', map_location=device)
 
 # Define the preprocessing transformations
 preprocess = transforms.Compose([
@@ -30,6 +34,7 @@ preprocess = transforms.Compose([
 ])
 
 # API to handle image prediction
+@app.route('/predict', methods=['POST'])
 @app.route('/predict', methods=['POST'])
 def predict():
     # Get image from the request
@@ -41,19 +46,23 @@ def predict():
     # Preprocess the image
     img = Image.open(file.stream)
     img = img.convert('RGB')
-    img_tensor = preprocess(img).unsqueeze(0)
+    img_tensor = preprocess(img).unsqueeze(0).to(device)  # Move to device
 
     # Get prediction from the model
     with torch.no_grad():
-        output = model(img_tensor)
-        _, predicted_idx = torch.max(output, 1)
-    
-    # Define your classes (replace this with your labels)
+        try:
+            output = model(img_tensor)
+            _, predicted_idx = torch.max(output, 1)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500  # Return error details
+
+    # Define your classes
     labels = ['Blight', 'Common Rust', 'Grey Leaf Spot', 'Healthy']
     predicted_label = labels[predicted_idx.item()]
     
     # Return the prediction result
     return jsonify({'prediction': predicted_label})
+
 
 if __name__ == '__main__':
     # Set the port from the environment variable or default to 8080
