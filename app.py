@@ -19,7 +19,7 @@ from torchvision.models import ResNet18_Weights
 model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = torch.nn.Linear(in_features=512, out_features=4)
 model = model.to(device)
-model.load_state_dict(torch.load('model.pth', map_location=device, weights_only=False))
+model.load_state_dict(torch.load('model.pth', map_location=device,))
 model.eval()
 
 # Define the preprocessing transformations
